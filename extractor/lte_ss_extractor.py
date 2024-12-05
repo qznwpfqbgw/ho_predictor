@@ -77,7 +77,7 @@ class Lte_Signal_Strength_Extractor(Extractor):
             "scell3_lte_rsrq": float(df["scell3_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell3_RSRQ"].tail(1).values[0]) else -200,
             "scell3_lte_rsrp": float(df["scell3_RSRP"].tail(1).values[0]) if not pd.isna(df["scell3_RSRP"].tail(1).values[0]) else -200,
             "lte_phy_EARFCN": int(df['EARFCN'].tail(1).values[0]) if not pd.isna(df['EARFCN'].tail(1).values[0]) else 0,
-            "lte_phy_Number_of_Neighbor_Cells": int(df['lte_phy_Number_of_Neighbor_Cells'].tail(1).values[0]) if not pd.isna(df['lte_phy_Number_of_Neighbor_Cells'].tail(1).values[0]) else 0,
+            "lte_phy_Number_of_Neighbor_Cells": int(df['Number of Neighbor Cells'].tail(1).values[0]) if not pd.isna(df['Number of Neighbor Cells'].tail(1).values[0]) else 0,
         }
         
         return result_dict
