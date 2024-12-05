@@ -1,4 +1,5 @@
 from mobile_insight.monitor import OnlineMonitor
+from actor import Actor
 from predictor import *
 from actor import *
 from feature_extractor import FeatureExtractor
@@ -6,6 +7,7 @@ from threading import Timer, Thread, Event
 import os
 import json
 from datetime import datetime as dt
+from predictor import Predictor
 from utils.myMsgLogger import MyMsgLogger
 
 
@@ -88,6 +90,8 @@ class Runner:
         dumper.save_decoded_msg_as(self.xml_log_path)
         self.src.save_log_as(self.mi2log_log_path)
 
+        self.dev = dev
+
     def create_log_dir(self, log_dir):
         if log_dir is None:
             now = dt.today()
@@ -120,6 +124,74 @@ class Runner:
         self.actor.do_action(pred_output)
 
 
+class DefaultRunner(Runner):
+    def __init__(
+        self,
+        dev: str,
+        verbose: float,
+        log_dir: str = None,
+        baudrate=9600,
+        predict_interval: float = 1,
+        feature_extractor: FeatureExtractor = FeatureExtractor(),
+        predictor: Predictor = Predictor(),
+        actor: Actor = Actor(),
+    ) -> None:
+        rrc_ota_parser = RRC_OTA_Parser()
+        lte_ss_parser = Lte_Signal_Strength_Parser()
+        nr_ss_parser = NR_Signal_Strength_Parser()
+
+        ho_extractor = HO_Extractor()
+        ho_extractor.set_source_parser(rrc_ota_parser)
+
+        mr_extractor = MR_Extractor()
+        mr_extractor.set_source_parser(rrc_ota_parser)
+
+        lte_ss_extractor = Lte_Signal_Strength_Extractor()
+        lte_ss_extractor.set_source_parser(lte_ss_parser)
+
+        nr_ss_extractor = NR_Signal_Strength_Extractor()
+        nr_ss_extractor.set_source_parser(nr_ss_parser)
+
+        feature_extractor.add_parser(rrc_ota_parser)
+        feature_extractor.add_parser(lte_ss_parser)
+        feature_extractor.add_parser(nr_ss_parser)
+        feature_extractor.add_extractor(ho_extractor)
+        feature_extractor.add_extractor(mr_extractor)
+        feature_extractor.add_extractor(lte_ss_extractor)
+        feature_extractor.add_extractor(nr_ss_extractor)
+        super().__init__(
+            feature_extractor,
+            predictor,
+            actor,
+            dev,
+            log_dir,
+            baudrate,
+            predict_interval,
+        )
+
+        verbose = min(verbose, 0.1)
+
+        self.verbose_task = LoopTimer(predict_interval, self.predict_task)
+
+    def show_ho(self):
+        HOs = [
+            "LTE_HO",
+            "MN_HO",
+            "SN_setup",
+            "SN_Rel",
+            "SN_HO",
+            "Conn_Req",
+            "RLF",
+            "SCG_RLF",
+        ]
+        self.feature_extractor.get_feature_dict()
+        features = {k: v for k, v in features.items() if k in HOs}
+
+        for k, v in features.items():
+            if v == 1:
+                print(f"{self.dev}: HO {k} happened!!!!!")
+
+
 if __name__ == "__main__":
     from parser import *
     from extractor import *
@@ -150,7 +222,11 @@ if __name__ == "__main__":
     feature_extractor.add_extractor(lte_ss_extractor)
     feature_extractor.add_extractor(nr_ss_extractor)
 
-    feature_extractor.set_data_order(
+    runner = DefaultRunner(
+        dev="sm01",
+    )
+
+    runner.feature_extractor.set_data_order(
         [
             "LTE_HO",
             "MN_HO",
@@ -190,15 +266,7 @@ if __name__ == "__main__":
         ]
     )
 
-    runner = Runner(
-        feature_extractor=feature_extractor,
-        predictor=Predictor(),
-        actor=Actor(),
-        dev="sm01",
-    )
-
     try:
-
         runner.run()
         while True:
             time.sleep(1)
