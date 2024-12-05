@@ -21,3 +21,6 @@ class Extractor:
             callback(out_dict)
         
         return out_dict
+    
+    def get_feature_key(self):
+        return self.default_output.keys()

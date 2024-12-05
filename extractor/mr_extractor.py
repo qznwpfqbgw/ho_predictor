@@ -36,7 +36,7 @@ class MR_Extractor(Extractor):
             "eventB1-NR-r15": 0,
             "reportCGI": 0,
             "reportStrongestCells": 0,
-            "others": 0
+            "others": 0,
         }
         self.measobj_dict = {}
         self.report_config_dict = {}

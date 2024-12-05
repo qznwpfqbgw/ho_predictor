@@ -11,6 +11,7 @@ class NR_Signal_Strength_Extractor(Extractor):
             "nr_best_rsrp": -200,
             "current_nr_rsrq": -200,
             "current_nr_rsrp": -200,
+            "nr_phy_Num_Cells": 0
         }
 
     def extract(self, df) -> dict:
@@ -49,7 +50,7 @@ class NR_Signal_Strength_Extractor(Extractor):
             ),
             axis=1,
         )
-        
+
         df.replace(-200, np.nan, inplace=True)
         df.fillna(method='ffill', inplace=True)
         nr_best_rsrq.replace(-200, np.nan, inplace=True)
@@ -62,6 +63,7 @@ class NR_Signal_Strength_Extractor(Extractor):
             "nr_best_rsrp": float(nr_best_rsrp.tail(1).values[0]) if not pd.isna(nr_best_rsrp.tail(1).values[0]) else -200,
             "current_nr_rsrq": float(df["current_nr_RSRQ"].tail(1).values[0]) if not pd.isna(df["current_nr_RSRQ"].tail(1).values[0]) else -200,
             "current_nr_rsrp": float(df["current_nr_RSRP"].tail(1).values[0]) if not pd.isna(df["current_nr_RSRP"].tail(1).values[0]) else -200,
+            "nr_phy_Num_Cells": float(df["nr_phy_Num_Cells"].tail(1).values[0]) if not pd.isna(df["nr_phy_Num_Cells"].tail(1).values[0]) else 0,
         }
 
         return result_dict

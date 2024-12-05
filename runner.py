@@ -150,6 +150,45 @@ if __name__ == "__main__":
     feature_extractor.add_extractor(lte_ss_extractor)
     feature_extractor.add_extractor(nr_ss_extractor)
 
+    feature_extractor.set_data_order(
+        [
+            "LTE_HO",
+            "MN_HO",
+            "SN_setup",
+            "SN_Rel",
+            "SN_HO",
+            "Conn_Req",
+            "RLF",
+            "SCG_RLF" "eventA1",
+            "eventA2",
+            "E-UTRAN-eventA3",
+            "eventA5",
+            "eventA6",
+            "NR-eventA3",
+            "eventB1-NR-r15",
+            "reportCGI",
+            "reportStrongestCells",
+            "others",
+            "nr_best_rsrq",
+            "nr_best_rsrp",
+            "lte_best_rsrq",
+            "lte_best_rsrp",
+            "current_nr_rsrq",
+            "current_nr_rsrp",
+            "current_lte_rsrq",
+            "current_lte_rsrp",
+            "scell1_lte_rsrq",
+            "scell1_lte_rsrp",
+            "scell2_lte_rsrq",
+            "scell2_lte_rsrp",
+            "scell3_lte_rsrq",
+            "scell3_lte_rsrp",
+            "lte_phy_EARFCN",
+            "lte_phy_Number_of_Neighbor_Cells",
+            "nr_phy_Num_Cells",
+        ]
+    )
+
     runner = Runner(
         feature_extractor=feature_extractor,
         predictor=Predictor(),
