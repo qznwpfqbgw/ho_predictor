@@ -59,7 +59,11 @@ class HO_Extractor(Extractor):
                 
             if df["rrcConnectionRequest"].iloc[i] == '1':
                 D['Conn_Req'].append(HO(start=t))
-        
+                
+        for k, v in D.items():
+            if len(v) > 0:
+                print(f"{k} happened!!!")
+            
         return D
     
     def extract(self, df) -> dict:

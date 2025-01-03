@@ -1,0 +1,65 @@
+from .predictor import Predictor
+import xgboost as xgb
+import numpy as np
+
+class RLF_Xgboost_Predictor(Predictor):
+    def __init__(self):
+        super().__init__()
+        self.model = xgb.Booster()
+        self.model.load_model(
+            "/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_5s_3s.json"
+        )
+        print('loading model',flush=True)
+        self.fs = open("out.txt",'w')
+
+    def predict(self, x_in):
+        all_keys = [
+            "LTE_HO",
+            "MN_HO",
+            "SN_setup",
+            "SN_Rel",
+            "SN_HO",
+            "Conn_Req",
+            "RLF",
+            "SCG_RLF",
+            "eventA1",
+            "eventA2",
+            "E-UTRAN-eventA3",
+            "eventA5",
+            "eventA6",
+            "NR-eventA3",
+            "eventB1-NR-r15",
+            "reportCGI",
+            "reportStrongestCells",
+            "others",
+            "nr_best_rsrq",
+            "nr_best_rsrp",
+            "lte_best_rsrq",
+            "lte_best_rsrp",
+            "current_nr_rsrq",
+            "current_nr_rsrp",
+            "current_lte_rsrq",
+            "current_lte_rsrp",
+            "scell1_lte_rsrq",
+            "scell1_lte_rsrp",
+            "scell2_lte_rsrq",
+            "scell2_lte_rsrp",
+            "scell3_lte_rsrq",
+            "scell3_lte_rsrp",
+            "lte_phy_EARFCN",
+            "lte_phy_Number_of_Neighbor_Cells",
+            "nr_phy_Num_Cells",
+        ]
+        
+        if len(x_in) > 0:
+            x_in = np.array([
+                [d.get(key, np.nan) for key in all_keys]
+                for d in x_in
+            ]).flatten().reshape(1,-1)
+            x = xgb.DMatrix(x_in)
+            y = self.model.predict(x)
+            if y>0.5:
+                print("Close to RLF !!!")
+            
+            print(list(x_in[0]), file=self.fs)
+            # print(y)

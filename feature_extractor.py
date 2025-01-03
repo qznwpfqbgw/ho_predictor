@@ -3,23 +3,32 @@ from collections import deque
 import time
 from parser import *
 from extractor import *
-
+from utils.loop_timer import LoopTimer
 
 class FeatureExtractor(Analyzer):
-    def __init__(self, sample_interval_sec=1.0, sample_length_sec=3, offline=False):
+    def __init__(self, sample_interval_sec=1.0, sample_length_sec=3):
         super().__init__()
-        if not offline:
-            self.add_source_callback(self.online_ue_event_filter)
-        else:
-            self.add_source_callback(self.offline_ue_event_filter)
+        self.add_source_callback(self.online_ue_event_filter)
         self.parsers: list[Parser] = []
         self.extractors: list[Extractor] = []
         self.sample_interval = sample_interval_sec
         self.last_sample_timestamp = None
         self.current_data = {}
-
+        self.default_data = {}
+    
         # deque is thread-safe https://docs.python.org/zh-tw/3/library/collections.html#collections.deque
-        self.sample_data = deque(maxlen=int(sample_length_sec // sample_interval_sec))
+        self.sample_data = deque(maxlen=int(sample_length_sec / sample_interval_sec))
+        self.sample_task_thread = LoopTimer(sample_interval_sec, self.sample_task)
+        
+    def run(self):
+        self.sample_task_thread.start()
+        
+    def sample_task(self):
+        # print(len(self.current_data))
+        # print(self.current_data)
+        self.sample_data.append(self.current_data)
+        # print(len(self.sample_data))
+        # self.current_data = self.default_data
 
     def set_source(self, source):
         super().set_source(source)
@@ -38,20 +47,18 @@ class FeatureExtractor(Analyzer):
         for k, v in extractor.default_output.items():
             if k not in self.current_data.keys():
                 self.current_data[k] = v
+                self.default_data[k] = v
             else:
                 raise Exception(f"Same feature key {k}")
 
     def set_data_order(self, new_order):
+        # print(self.current_data)
         self.current_data = {key: self.current_data[key] for key in new_order}
+        self.default_data = {key: self.default_data[key] for key in new_order}
+        # print(self.current_data)
+        # exit(0)
 
     def online_ue_event_filter(self, msg):
-        cur_timestamp = time.time()
-
-        if self.last_sample_timestamp == None:
-            self.last_sample_timestamp = cur_timestamp
-        if self.verbose_timestamp == None:
-            self.verbose_timestamp = cur_timestamp
-
         for parser in self.parsers:
             if msg.type_id in parser.type_id:
                 parser.do_parse(msg)
@@ -59,47 +66,10 @@ class FeatureExtractor(Analyzer):
         for extractor in self.extractors:
             data = extractor.do_extract()
             self.current_data.update(data)
-
-        # Add one sample for each interval
-        if cur_timestamp - self.last_sample_timestamp >= self.sample_interval:
-            self.last_sample_timestamp = cur_timestamp
-            self.sample_data.append(self.current_data)
-
-            # Clear all parser storage
-            for parser in self.parsers:
-                parser.clear_storage()
-
-    def offline_ue_event_filter(self, msg):
-        ts = dict(msg.data.decode())["timestamp"]
-
-        if self.last_sample_timestamp == None:
-            self.last_sample_timestamp = ts
-
-        cur_timestamp = ts
-
+            
+        # Clear all parser storage
         for parser in self.parsers:
-            if msg.type_id in parser.type_id:
-                parser.do_parse(msg)
-
-        # Add one sample for each interval
-        if (
-            cur_timestamp - self.last_sample_timestamp
-        ).total_seconds() >= self.sample_interval:
-            self.last_sample_timestamp = cur_timestamp
-
-            for extractor in self.extractors:
-                data = extractor.do_extract()
-                self.current_data.update(data)
-
-            self.sample_data.append(self.current_data)
-            tmp = []
-            for element in self.sample_data:
-                for value in element.values():
-                    tmp.append(value)
-            print(tmp)
-            # Clear all parser storage
-            for parser in self.parsers:
-                parser.clear_storage()
+            parser.clear_storage()
 
     def get_feature_dict(self):
         return self.sample_data
@@ -126,7 +96,7 @@ if __name__ == "__main__":
     nr_ss_extractor = NR_Signal_Strength_Extractor()
     nr_ss_extractor.set_source_parser(nr_ss_parser)
 
-    feature_extractor = FeatureExtractor(offline=True)
+    feature_extractor = FeatureExtractor()
     feature_extractor.set_source(src)
     feature_extractor.add_parser(rrc_ota_parser)
     feature_extractor.add_parser(lte_ss_parser)
