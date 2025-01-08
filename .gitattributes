@@ -1,1 +1,2 @@
 xgb_boost_scale_pos_weight_500_0.1_interval_5s_3s.json filter=lfs diff=lfs merge=lfs -text
+xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json filter=lfs diff=lfs merge=lfs -text

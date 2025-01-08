@@ -1,13 +1,13 @@
 from .predictor import Predictor
 import xgboost as xgb
 import numpy as np
-
+import time
 class RLF_Xgboost_Predictor(Predictor):
     def __init__(self):
         super().__init__()
         self.model = xgb.Booster()
         self.model.load_model(
-            "/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_5s_3s.json"
+            "/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json"
         )
         print('loading model',flush=True)
         self.fs = open("out.txt",'w')
@@ -51,15 +51,14 @@ class RLF_Xgboost_Predictor(Predictor):
             "nr_phy_Num_Cells",
         ]
         
-        if len(x_in) > 0:
+        if len(x_in) > 0 and x_in[-1]['lte_phy_EARFCN'] != 0:
             x_in = np.array([
                 [d.get(key, np.nan) for key in all_keys]
                 for d in x_in
             ]).flatten().reshape(1,-1)
             x = xgb.DMatrix(x_in)
             y = self.model.predict(x)
-            if y>0.5:
-                print("Close to RLF !!!")
-            
-            print(list(x_in[0]), file=self.fs)
-            # print(y)
+            if y > 0.5:
+                print(time.time(), ": Close to RLF !!!")
+                return True
+        return False

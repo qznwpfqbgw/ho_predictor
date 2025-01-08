@@ -1,6 +1,6 @@
 from .extractor import *
 from collections import namedtuple
-
+import time
 class HO_Extractor(Extractor):
     def __init__(self) -> None:
         super().__init__()
@@ -62,7 +62,7 @@ class HO_Extractor(Extractor):
                 
         for k, v in D.items():
             if len(v) > 0:
-                print(f"{k} happened!!!")
+                print(time.time(), f"{k} happened!!!")
             
         return D
     

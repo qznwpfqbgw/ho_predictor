@@ -220,7 +220,7 @@ if __name__ == "__main__":
     nr_ss_extractor = NR_Signal_Strength_Extractor()
     nr_ss_extractor.set_source_parser(nr_ss_parser)
 
-    feature_extractor = FeatureExtractor(sample_interval_sec=0.1, sample_length_sec = 5)
+    feature_extractor = FeatureExtractor(sample_interval_sec=0.1, sample_length_sec = 3)
     feature_extractor.add_parser(rrc_ota_parser)
     feature_extractor.add_parser(lte_ss_parser)
     feature_extractor.add_parser(nr_ss_parser)

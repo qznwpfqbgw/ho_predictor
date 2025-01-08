@@ -19,6 +19,7 @@ class Lte_Signal_Strength_Extractor(Extractor):
             "lte_phy_EARFCN": 0,
             "lte_phy_Number_of_Neighbor_Cells": 0
         }
+        self.current = self.default_output.copy()
         
     def extract(self, df) -> dict:
         lte_phy_rsrq_cols = [f"RSRQ{i}" for i in range(1, 12)]
@@ -59,25 +60,29 @@ class Lte_Signal_Strength_Extractor(Extractor):
         
         df.replace(-200, np.nan, inplace=True)
         df.fillna(method='ffill', inplace=True)
+        df.fillna(method='bfill', inplace=True)
         lte_best_rsrq.replace(-200, np.nan, inplace=True)
         lte_best_rsrq.fillna(method='ffill', inplace=True)
+        lte_best_rsrq.fillna(method='bfill', inplace=True)
         lte_best_rsrp.replace(-200, np.nan, inplace=True)
         lte_best_rsrp.fillna(method='ffill', inplace=True)
+        lte_best_rsrp.fillna(method='bfill', inplace=True)
         
 
         result_dict = {
-            "lte_best_rsrq": float(lte_best_rsrq.tail(1).values[0]) if not pd.isna(lte_best_rsrq.tail(1).values[0]) else -200, 
-            "lte_best_rsrp": float(lte_best_rsrp.tail(1).values[0]) if not pd.isna(lte_best_rsrp.tail(1).values[0]) else -200,
-            "current_lte_rsrq": float(df["current_lte_RSRQ"].tail(1).values[0]) if not pd.isna(df["current_lte_RSRQ"].tail(1).values[0]) else -200,
-            "current_lte_rsrp": float(df["current_lte_RSRP"].tail(1).values[0]) if not pd.isna(df["current_lte_RSRP"].tail(1).values[0]) else -200,
-            "scell1_lte_rsrq": float(df["scell1_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell1_RSRQ"].tail(1).values[0]) else -200,
-            "scell1_lte_rsrp": float(df["scell1_RSRP"].tail(1).values[0]) if not pd.isna(df["scell1_RSRP"].tail(1).values[0]) else -200,
-            "scell2_lte_rsrq": float(df["scell2_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell2_RSRQ"].tail(1).values[0]) else -200,
-            "scell2_lte_rsrp": float(df["scell2_RSRP"].tail(1).values[0]) if not pd.isna(df["scell2_RSRP"].tail(1).values[0]) else -200,
-            "scell3_lte_rsrq": float(df["scell3_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell3_RSRQ"].tail(1).values[0]) else -200,
-            "scell3_lte_rsrp": float(df["scell3_RSRP"].tail(1).values[0]) if not pd.isna(df["scell3_RSRP"].tail(1).values[0]) else -200,
+            "lte_best_rsrq": float(lte_best_rsrq.tail(1).values[0]) if not pd.isna(lte_best_rsrq.tail(1).values[0]) else self.current["lte_best_rsrq"], 
+            "lte_best_rsrp": float(lte_best_rsrp.tail(1).values[0]) if not pd.isna(lte_best_rsrp.tail(1).values[0]) else self.current["lte_best_rsrp"],
+            "current_lte_rsrq": float(df["current_lte_RSRQ"].tail(1).values[0]) if not pd.isna(df["current_lte_RSRQ"].tail(1).values[0]) else self.current["current_lte_rsrq"],
+            "current_lte_rsrp": float(df["current_lte_RSRP"].tail(1).values[0]) if not pd.isna(df["current_lte_RSRP"].tail(1).values[0]) else self.current["current_lte_rsrp"],
+            "scell1_lte_rsrq": float(df["scell1_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell1_RSRQ"].tail(1).values[0]) else self.current["scell1_lte_rsrq"],
+            "scell1_lte_rsrp": float(df["scell1_RSRP"].tail(1).values[0]) if not pd.isna(df["scell1_RSRP"].tail(1).values[0]) else self.current["scell1_lte_rsrp"],
+            "scell2_lte_rsrq": float(df["scell2_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell2_RSRQ"].tail(1).values[0]) else self.current["scell2_lte_rsrq"],
+            "scell2_lte_rsrp": float(df["scell2_RSRP"].tail(1).values[0]) if not pd.isna(df["scell2_RSRP"].tail(1).values[0]) else self.current["scell2_lte_rsrp"],
+            "scell3_lte_rsrq": float(df["scell3_RSRQ"].tail(1).values[0]) if not pd.isna(df["scell3_RSRQ"].tail(1).values[0]) else self.current["scell3_lte_rsrp"],
+            "scell3_lte_rsrp": float(df["scell3_RSRP"].tail(1).values[0]) if not pd.isna(df["scell3_RSRP"].tail(1).values[0]) else self.current["scell3_lte_rsrp"],
             "lte_phy_EARFCN": int(df['EARFCN'].tail(1).values[0]) if not pd.isna(df['EARFCN'].tail(1).values[0]) else 0,
             "lte_phy_Number_of_Neighbor_Cells": int(df['Number of Neighbor Cells'].tail(1).values[0]) if not pd.isna(df['Number of Neighbor Cells'].tail(1).values[0]) else 0,
         }
+        self.current = result_dict.copy()
         
         return result_dict
