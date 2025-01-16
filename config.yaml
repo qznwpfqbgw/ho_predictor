@@ -1,0 +1,6 @@
+Device:
+  - qc01
+  - qc02
+
+PATH_TEMP_DIR: /home/fourcolor/Documents/ho_preditor/modem-utilities/temp
+PATH_UTILS: /home/fourcolor/Documents/ho_preditor/modem-utilities

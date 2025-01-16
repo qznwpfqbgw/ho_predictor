@@ -97,7 +97,8 @@ class MyMsgLogger(Analyzer):
         if not msg.data:
             return
         # self.__msg_log.append(msg)
-        date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        date = str(datetime.datetime.now())
+        # date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         # self.log_info(date+':'+msg.type_id)
         decoded_msg = ""
         if self.decode_type == self.XML:

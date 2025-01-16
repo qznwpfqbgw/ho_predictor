@@ -69,7 +69,7 @@ class Runner:
         dumper.save_decoded_msg_as(self.xml_log_path)
         self.src.save_log_as(self.mi2log_log_path)
 
-        self.dev = ser
+        self.ser = ser
 
     def create_log_dir(self, log_dir):
         if log_dir is None:
@@ -170,7 +170,7 @@ class DeviceRunner(Runner):
 
         for k, v in features.items():
             if v == 1:
-                print(f"{self.dev}: HO {k} happened!!!!!")
+                print(f"{self.ser}: HO {k} happened!!!!!")
 
 
 class DefaultRunner(Runner):
@@ -273,7 +273,8 @@ if __name__ == "__main__":
     
     predictor = RLF_Xgboost_Predictor()
     runner = DefaultRunner(
-        ser="/tmp/ttyV1",
+        # ser=get_ser('','qc02'),
+        ser='/tmp/ttyV1',
         predictor=predictor,
         feature_extractor=feature_extractor,
         predict_interval = 0.1
