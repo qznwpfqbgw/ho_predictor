@@ -1,4 +1,4 @@
-from .runner import Runner, get_ser
+from runner import Runner, get_ser
 from actor import *
 from extractor import *
 from predictor import *
@@ -8,12 +8,50 @@ from multiprocessing import Process, Queue
 import re
 import argparse
 import yaml
+import subprocess
+import os
 
-def get_wdm(fn):
-    with open(fn, 'r') as file:
-       pattern = r"\[(\/dev\/cdc-wdm\d+)\]" 
-       content = file.read()
-       matches = re.findall(pattern, content)
+GLOBAL_CONFIG = None
+DEVICE_INFO = None
+def load_config(config_file):
+    global GLOBAL_CONFIG
+    with open(config_file, 'r') as f:
+        GLOBAL_CONFIG = yaml.safe_load(f)
+
+def setup_modem(dev):
+    global GLOBAL_CONFIG
+    process = subprocess.Popen(
+        [
+            os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'dial-qmi.sh'),
+            '-i',
+            dev
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=5
+    )
+    stdout, stderr = process.communicate()
+    
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr)
+    
+    with open(os.path.join(GLOBAL_CONFIG['PATH_TEMP_DIR'], f'temp-nas_{dev}'), 'r') as f:
+        pattern = r"\[(\/dev\/cdc-wdm\d+)\]"
+        content = f.read()
+        matches = re.findall(pattern, content)[0]
+        wdm = matches
+        pattern = r"CID:\s*'(\d+)'"
+        matches = re.findall(pattern, content)[0]
+        cid = matches
+    
+    return wdm, cid
+
+def change_band(dev, band):
+    global GLOBAL_CONFIG, DEVICE_INFO
+    subprocess.Popen([GLOBAL_CONFIG['PATH_UTILS'], ])
+
 
 def create_runner(dev, queue):
     rrc_ota_parser = RRC_OTA_Parser()
@@ -32,7 +70,8 @@ def create_runner(dev, queue):
     nr_ss_extractor = NR_Signal_Strength_Extractor()
     nr_ss_extractor.set_source_parser(nr_ss_parser)
 
-    feature_extractor = FeatureExtractor(sample_interval_sec=0.1, sample_length_sec = 3)
+    feature_extractor = FeatureExtractor(
+        sample_interval_sec=0.1, sample_length_sec=3)
     feature_extractor.add_parser(rrc_ota_parser)
     feature_extractor.add_parser(lte_ss_parser)
     feature_extractor.add_parser(nr_ss_parser)
@@ -40,8 +79,6 @@ def create_runner(dev, queue):
     feature_extractor.add_extractor(mr_extractor)
     feature_extractor.add_extractor(lte_ss_extractor)
     feature_extractor.add_extractor(nr_ss_extractor)
-    
-
 
     feature_extractor.set_data_order(
         [
@@ -83,36 +120,57 @@ def create_runner(dev, queue):
         ]
     )
     actor = DBL_Actor(queue, dev, feature_extractor)
-    predictor = RLF_Xgboost_Predictor()
+    predictor = RLF_Xgboost_Predictor(GLOBAL_CONFIG['MODEL_PATH'])
     runner = Runner(
-        ser=get_ser('',dev),
+        ser=get_ser('', dev),
         predictor=predictor,
         feature_extractor=feature_extractor,
-        predict_interval = 0.1
+        predict_interval=0.1,
+        actor=actor
     )
     return runner
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config_file', default='config.yml', help="Config file (yaml)")
+    parser.add_argument('-c', '--config_file',
+                        default='config.yml', help="Config file (yaml)")
     args = parser.parse_args()
-    with open(args.config_file,'r') as f:
-        config = yaml.safe_load(f)
-    args.devs = devs = ['qc01', 'qc02']
     
+    load_config(args.config_file)
+
+    devs = GLOBAL_CONFIG['Device']
+
+    if (len(devs) != 2):
+        raise Exception("DBL need at least 2 device")
+    
+    # Setup modem
+    DEVICE_INFO = []
+    for dev in devs:
+        wdm, cid = setup_modem(devs)
+        DEVICE_INFO.append({'wdm': wdm, 'cid': cid})
+        
     q = Queue()
     runner1, runner2 = create_runner(devs[0], q), create_runner(devs[1], q)
-    
+    band_setting_timestamp = time.time()
+
     # lte_phy_EARFCN
     while True:
-        outs_info = {devs[0]:(False, None), devs[1]:(False, None)}
+        outs_info = {devs[0]: (False, None), devs[1]: (False, None)}
         while not q.empty():
             e = q.get()
-            outs_info[e[0]] = (e[1], e[2])
-        
+
+        if time.time() - band_setting_timestamp > GLOBAL_CONFIG['SLEEP_TIME']:
+            time.sleep(0.1)
+            continue
+
+        band_setting_timestamp = time.time()
+
+        outs_info[e[0]] = (e[1], e[2])
+
         if outs_info[devs[0]][0] == False and outs_info[devs[0]][0] == False:
             continue
-        
+
         if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
             pass
         elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:

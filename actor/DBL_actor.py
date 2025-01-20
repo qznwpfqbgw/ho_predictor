@@ -12,15 +12,17 @@ class DBL_Actor(Actor):
         self.feature_extractor = feature_extractor
     
     def do_action(self, pred_output):
-        if pred_output == True and time.time() - self.timer_start < 0.5:
+        if pred_output[0] > 0.5 and time.time() - self.timer_start < 0.3:
             self.counter += 1
-        else:
+        elif pred_output[0] > 0.5:
             self.counter = 1
             self.timer_start = time.time()
+        else:
+            self.counter = 0
         
         if self.counter >= 2:
             # do Action
-            self.q.put((self.dev, True, self.feature_extractor.get_feature_dict()))
+            self.q.put((self.dev, pred_output[0], pred_output[1]))
         else:
-            self.q.put((self.dev, False, self.feature_extractor.get_feature_dict()))
+            self.q.put((self.dev, pred_output[0], pred_output[1]))
             

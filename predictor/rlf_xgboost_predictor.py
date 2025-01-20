@@ -3,14 +3,13 @@ import xgboost as xgb
 import numpy as np
 import time
 class RLF_Xgboost_Predictor(Predictor):
-    def __init__(self):
+    def __init__(self, model_path):
         super().__init__()
         self.model = xgb.Booster()
         self.model.load_model(
-            "/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json"
+            model_path
         )
         print('loading model',flush=True)
-        self.fs = open("out.txt",'w')
 
     def predict(self, x_in):
         all_keys = [
@@ -60,5 +59,5 @@ class RLF_Xgboost_Predictor(Predictor):
             y = self.model.predict(x)
             if y > 0.5:
                 print(time.time(), ": Close to RLF !!!")
-                return True
-        return False
+                return y, x_in[-1]['lte_phy_EARFCN']
+        return 0, 0
