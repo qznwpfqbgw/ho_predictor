@@ -224,6 +224,7 @@ int main(int argc, char **argv) {
     g_object_unref(device);
   g_main_loop_unref(loop);
   g_object_unref(file);
-
+  gettimeofday(&tv,NULL);
+  g_print("end %ld.%ld\n", tv.tv_sec, tv.tv_usec);
   return EXIT_SUCCESS;
 }

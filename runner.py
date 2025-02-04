@@ -271,10 +271,10 @@ if __name__ == "__main__":
         ]
     )
     
-    predictor = RLF_Xgboost_Predictor()
+    predictor = RLF_Xgboost_Predictor('/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json')
     runner = DefaultRunner(
-        # ser=get_ser('','qc02'),
-        ser='/tmp/ttyV1',
+        ser=get_ser('','qc00'),
+        # ser='/tmp/ttyV1',
         predictor=predictor,
         feature_extractor=feature_extractor,
         predict_interval = 0.1

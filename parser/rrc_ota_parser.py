@@ -87,7 +87,7 @@ class RRC_OTA_Parser(Parser):
 
     def catch_info(self, msg_dict):
         easy_dict = {}
-        easy_dict["PCI"], easy_dict["time"], easy_dict["Freq"] = msg_dict['Physical Cell ID'], msg_dict['timestamp'], msg_dict['Freq']
+        easy_dict["PCI"], easy_dict["time"], easy_dict["Freq"] = msg_dict['Physical Cell ID'], dt.now().strftime('%Y-%m-%d %H:%M:%S.%f'), msg_dict['Freq']
         readlines = msg_dict['Msg'].split('\n')
         rrc_info_dict = self.read_rrc_msg_content(readlines)
         for key in rrc_info_dict:

@@ -10,9 +10,13 @@ import argparse
 import yaml
 import subprocess
 import os
+import random
 
 GLOBAL_CONFIG = None
 DEVICE_INFO = None
+
+ALL_LTE_BAND_CANDIDATE = {1, 3, 7, 8}
+
 def load_config(config_file):
     global GLOBAL_CONFIG
     with open(config_file, 'r') as f:
@@ -45,12 +49,39 @@ def setup_modem(dev):
         pattern = r"CID:\s*'(\d+)'"
         matches = re.findall(pattern, content)[0]
         cid = matches
+        
+    subprocess.Popen(
+        [
+            os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), 
+            '-i', 
+            dev, 
+            '-l', 
+            ':'.join([1,3,7,8])
+        ], 
+        shell=True
+    )
+    stdout, stderr = process.communicate()
     
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr)
+        
     return wdm, cid
 
-def change_band(dev, band):
+def change_band(dev):
     global GLOBAL_CONFIG, DEVICE_INFO
-    subprocess.Popen([GLOBAL_CONFIG['PATH_UTILS'], ])
+    
+    band_candidate = ALL_LTE_BAND_CANDIDATE.copy()
+    for k, v in DEVICE_INFO:
+        band_candidate = band_candidate - {v['band']}
+    
+    band = random.choice(list(band_candidate))
+    print(band)
+    
+    subprocess.Popen([os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), '-i', dev, '-l', ':'.join(band)], shell=True)
+    print(f'Change band from {DEVICE_INFO[dev]['band']} to {band}')
+    DEVICE_INFO[dev]['band'] = band
 
 
 def create_runner(dev, queue):
@@ -145,14 +176,14 @@ if __name__ == '__main__':
         raise Exception("DBL need at least 2 device")
     
     # Setup modem
-    DEVICE_INFO = []
+    DEVICE_INFO = {}
     for dev in devs:
         wdm, cid = setup_modem(devs)
-        DEVICE_INFO.append({'wdm': wdm, 'cid': cid})
+        DEVICE_INFO[dev] = {'wdm': wdm, 'cid': cid, 'band': [1,3,7,8]}
         
     q = Queue()
     runner1, runner2 = create_runner(devs[0], q), create_runner(devs[1], q)
-    band_setting_timestamp = time.time()
+    band_setting_timestamp = time.time() - 10
 
     # lte_phy_EARFCN
     while True:
@@ -160,20 +191,21 @@ if __name__ == '__main__':
         while not q.empty():
             e = q.get()
 
-        if time.time() - band_setting_timestamp > GLOBAL_CONFIG['SLEEP_TIME']:
+        if time.time() - band_setting_timestamp < GLOBAL_CONFIG['SLEEP_TIME']:
             time.sleep(0.1)
             continue
-
-        band_setting_timestamp = time.time()
 
         outs_info[e[0]] = (e[1], e[2])
 
         if outs_info[devs[0]][0] == False and outs_info[devs[0]][0] == False:
             continue
-
+        
+        band_setting_timestamp = time.time()
+        
         if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
-            pass
+            change_band(devs[0])
         elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:
-            pass
+            change_band(devs[1])
         elif outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == True:
+            # change_band(devs[0])
             pass
