@@ -49,15 +49,15 @@ class RLF_Xgboost_Predictor(Predictor):
             "lte_phy_Number_of_Neighbor_Cells",
             "nr_phy_Num_Cells",
         ]
-        
-        if len(x_in) > 0 and x_in[-1]['lte_phy_EARFCN'] != 0:
-            x_in = np.array([
+
+        if len(x_in) == x_in.maxlen and x_in[-1]['lte_phy_EARFCN'] != 0:
+            x_in_np = np.array([
                 [d.get(key, np.nan) for key in all_keys]
                 for d in x_in
             ]).flatten().reshape(1,-1)
-            x = xgb.DMatrix(x_in)
+            x = xgb.DMatrix(x_in_np)
             y = self.model.predict(x)
             if y > 0.5:
                 print(time.time(), ": Close to RLF !!!")
-                return y, x_in[-1]['lte_phy_EARFCN']
+            return y[0], x_in[-1]['lte_phy_EARFCN']
         return 0, 0

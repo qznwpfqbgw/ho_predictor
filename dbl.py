@@ -79,7 +79,15 @@ def change_band(dev):
     band = random.choice(list(band_candidate))
     print(band)
     
-    subprocess.Popen([os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), '-i', dev, '-l', ':'.join(band)], shell=True)
+    subprocess.Popen(
+        ' '.join([
+            os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), 
+            '-i', 
+            dev, 
+            '-l', 
+            str(band)
+        ]
+    ), shell=True)
     print(f"""Change band from {DEVICE_INFO[dev]['band']} to {band}""")
     DEVICE_INFO[dev]['band'] = band
 
@@ -180,33 +188,50 @@ if __name__ == '__main__':
     for dev in devs:
         wdm, cid = setup_modem(dev)
         DEVICE_INFO[dev] = {'wdm': wdm, 'cid': cid, 'band': [1,3,7,8]}
-        
-    q = Queue()
-    runner1, runner2 = create_runner(devs[0], q), create_runner(devs[1], q)
     band_setting_timestamp = time.time() - 10
-
-    # lte_phy_EARFCN
-    e = None
-    while True:
-        outs_info = {devs[0]: (False, None), devs[1]: (False, None)}
-        while not q.empty():
-            e = q.get()
-
-        if time.time() - band_setting_timestamp < GLOBAL_CONFIG['SLEEP_TIME'] or e is None:
-            time.sleep(0.1)
-            continue
-
-        outs_info[e[0]] = (e[1], e[2])
-
-        if outs_info[devs[0]][0] == False and outs_info[devs[0]][0] == False:
-            continue
+    
+    try:
+        q = Queue()
+        runner1, runner2 = create_runner(devs[0], q), create_runner(devs[1], q)
         
-        band_setting_timestamp = time.time()
-        
-        if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
-            change_band(devs[0])
-        elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:
-            change_band(devs[1])
-        elif outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == True:
-            # change_band(devs[0])
-            pass
+        p1 = Process(target=runner1.run)     
+        p2 = Process(target=runner2.run)
+        p1.start()
+        p2.start()
+
+        # lte_phy_EARFCN
+        e = None
+        outs_info = {devs[0]: [False, None], devs[1]: [False, None]}
+        while True:
+            outs_info[devs[0]][0] = False
+            outs_info[devs[1]][0] = False
+            
+            while not q.empty():
+                e = q.get()
+
+            if time.time() - band_setting_timestamp < GLOBAL_CONFIG['SLEEP_TIME'] or e is None:
+                time.sleep(0.1)
+                continue
+            
+            outs_info[e[0]] = [e[1] > 0.5, e[2]]
+            print(outs_info)
+
+            if outs_info[devs[0]][0] == False and outs_info[devs[0]][0] == False:
+                continue
+            
+            band_setting_timestamp = time.time()
+            
+            if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
+                change_band(devs[0])
+            elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:
+                change_band(devs[1])
+            elif outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == True:
+                # change_band(devs[0])
+                pass
+    
+    except KeyboardInterrupt:
+        print('Main process received KeyboardInterrupt')
+        p1.join()
+        p2.join()
+        time.sleep(1)
+        print("Process killed, closed.")()
