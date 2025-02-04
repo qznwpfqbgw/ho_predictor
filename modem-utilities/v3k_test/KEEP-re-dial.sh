@@ -2,7 +2,7 @@
 #flag -m for module 1 / -n for module 2"
 #
 
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 TOP=$PATH_TEMP_DIR
 SUDO=sudo
 

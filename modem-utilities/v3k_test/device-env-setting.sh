@@ -71,7 +71,7 @@ ${SUDO} cp "$utility_dir/settings/70-persistent-net.rules" /etc/udev/rules.d/
 ${SUDO} udevadm control --reload-rules
 ${SUDO} udevadm trigger
 
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 CHECK_my_SATA_dir
 
 

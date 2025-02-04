@@ -3,7 +3,7 @@
 # Under development
 # Switch the default route in NTU experiment
 ###
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 SUDO=sudo
 ETH_GW="172.30.30.25"
 #ETH_GW=""

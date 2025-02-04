@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 
 V3k_USE="v3k_test"

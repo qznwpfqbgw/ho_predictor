@@ -10,7 +10,7 @@
 echo "Do NOT USE"
 exit 0
 
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 TOP="$PATH_TEMP_DIR"
 

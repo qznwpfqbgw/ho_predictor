@@ -3,7 +3,7 @@
 #Author: Chih-Yang Chen
 #input:  network INTERFACE name of usb modem
 #output: network INTERFACE file with cdc-wdmX and the corresponding at command port inside
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 SUDO=sudo
 CHECK_temp_dir

@@ -5,7 +5,7 @@
 #           will auto select the target INTERFACE dev    
 #input:  -i [INTERFACE] -l [LTE BAND] -e [ENDC NR BAND] 
 #output: NA
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 
 SUDO=sudo

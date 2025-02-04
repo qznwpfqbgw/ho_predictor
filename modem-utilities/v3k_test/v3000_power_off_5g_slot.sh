@@ -10,7 +10,7 @@ then
 	${SUDO} modprobe gpio_pca953x
 fi
 
-source PATH_for_NTU_exp
+source $(dirname "$(realpath "${BASH_SOURCE[0]}")")/PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 source $PATH_UTILS/AT_CHECK
 

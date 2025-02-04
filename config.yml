@@ -1,0 +1,10 @@
+Device:
+  - qc01
+  - qc02
+
+SLEEP_TIME: 3
+
+PATH_TEMP_DIR: /home/fourcolor/Documents/ho_predictor/modem-utilities/temp
+PATH_UTILS: /home/fourcolor/Documents/ho_predictor/modem-utilities
+
+MODEL_PATH: "/home/fourcolor/Documents/ho_predictor/xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json"

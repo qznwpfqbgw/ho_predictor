@@ -32,14 +32,13 @@ def setup_modem(dev):
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        timeout=5
     )
     stdout, stderr = process.communicate()
     
     if stdout:
-        print(stdout)
+        print(stdout.decode())
     if stderr:
-        print(stderr)
+        print(stderr.decode())
     
     with open(os.path.join(GLOBAL_CONFIG['PATH_TEMP_DIR'], f'temp-nas_{dev}'), 'r') as f:
         pattern = r"\[(\/dev\/cdc-wdm\d+)\]"
@@ -49,23 +48,24 @@ def setup_modem(dev):
         pattern = r"CID:\s*'(\d+)'"
         matches = re.findall(pattern, content)[0]
         cid = matches
-        
+    
+    
     subprocess.Popen(
-        [
+        ' '.join([
             os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), 
             '-i', 
             dev, 
             '-l', 
-            ':'.join([1,3,7,8])
-        ], 
+            ':'.join([str(i) for i in [1,3,7,8]])
+        ]), 
         shell=True
     )
     stdout, stderr = process.communicate()
-    
+
     if stdout:
-        print(stdout)
+        print(stdout.decode())
     if stderr:
-        print(stderr)
+        print(stderr.decode())
         
     return wdm, cid
 
@@ -80,7 +80,7 @@ def change_band(dev):
     print(band)
     
     subprocess.Popen([os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'band-setting.sh'), '-i', dev, '-l', ':'.join(band)], shell=True)
-    print(f'Change band from {DEVICE_INFO[dev]['band']} to {band}')
+    print(f"""Change band from {DEVICE_INFO[dev]['band']} to {band}""")
     DEVICE_INFO[dev]['band'] = band
 
 
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     # Setup modem
     DEVICE_INFO = {}
     for dev in devs:
-        wdm, cid = setup_modem(devs)
+        wdm, cid = setup_modem(dev)
         DEVICE_INFO[dev] = {'wdm': wdm, 'cid': cid, 'band': [1,3,7,8]}
         
     q = Queue()
@@ -186,12 +186,13 @@ if __name__ == '__main__':
     band_setting_timestamp = time.time() - 10
 
     # lte_phy_EARFCN
+    e = None
     while True:
         outs_info = {devs[0]: (False, None), devs[1]: (False, None)}
         while not q.empty():
             e = q.get()
 
-        if time.time() - band_setting_timestamp < GLOBAL_CONFIG['SLEEP_TIME']:
+        if time.time() - band_setting_timestamp < GLOBAL_CONFIG['SLEEP_TIME'] or e is None:
             time.sleep(0.1)
             continue
 
