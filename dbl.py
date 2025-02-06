@@ -220,7 +220,8 @@ if __name__ == '__main__':
     
     f = os.path.join(GLOBAL_CONFIG['LOG_DIR'], 'cmd_record.csv')
     dbl_log = open(f,'w')
-    print('Timestamp,dev_0,dev_1\n', file=dbl_log, flush=True)
+    print('Timestamp,dev_0,band_0,dev_1,band_1', file=dbl_log, flush=True)
+    dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '0', str(DEVICE_INFO[devs[0]]['band']), '0', str(DEVICE_INFO[devs[1]]['band'])]) + '\n')
     
     try:
         q = Queue()
@@ -254,13 +255,13 @@ if __name__ == '__main__':
             
             if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
                 change_band(devs[0])
-                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', '0']) + '\n')
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', str(DEVICE_INFO[devs[0]]['band']), '0', str(DEVICE_INFO[devs[1]]['band'])]) + '\n')
             elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:
                 change_band(devs[1])
-                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '0', '1']) + '\n')
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '0', str(DEVICE_INFO[devs[0]]['band']), '1', str(DEVICE_INFO[devs[1]]['band'])]) + '\n')
             elif outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == True:
                 # change_band(devs[0])
-                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', '1']) + '\n')
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', str(DEVICE_INFO[devs[0]]['band']), '1', str(DEVICE_INFO[devs[1]]['band'])]) + '\n')
                 # Show prediction result during experiment. )
     
     except KeyboardInterrupt:
