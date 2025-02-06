@@ -1,5 +1,5 @@
 Device:
-  - qc01
+  - qc00
   - qc02
 
 SLEEP_TIME: 3

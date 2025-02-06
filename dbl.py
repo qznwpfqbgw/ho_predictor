@@ -11,6 +11,7 @@ import yaml
 import subprocess
 import os
 import random
+import datetime
 
 GLOBAL_CONFIG = None
 DEVICE_INFO = None
@@ -21,9 +22,27 @@ def load_config(config_file):
     global GLOBAL_CONFIG
     with open(config_file, 'r') as f:
         GLOBAL_CONFIG = yaml.safe_load(f)
+        
+def create_log_dir(log_dir=None):
+    if log_dir is None:
+        now = dt.today()
+        n = [
+            now.year,
+            now.month,
+            now.day,
+            now.hour,
+            now.minute,
+            now.second,
+        ]
+        n = [str(x).zfill(2) for x in n]
+        n = "-".join(n[:3]) + "_" + "-".join(n[3:])
+        os.umask(0)
+        log_dir = os.path.join(os.path.dirname(__file__), "log", str(n))
+    os.makedirs(log_dir, exist_ok=True)
+    return log_dir
 
 def setup_modem(dev):
-    global GLOBAL_CONFIG
+    global GLOBAL_CONFIG, DEVICE_INFO
     process = subprocess.Popen(
         [
             os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'dial-qmi.sh'),
@@ -48,7 +67,12 @@ def setup_modem(dev):
         pattern = r"CID:\s*'(\d+)'"
         matches = re.findall(pattern, content)[0]
         cid = matches
-    
+        
+    band_candidate = ALL_LTE_BAND_CANDIDATE.copy()
+    if DEVICE_INFO is not None:
+        for k, v in DEVICE_INFO.items():
+            band_candidate = band_candidate - {v['band']}   
+    band = random.choice(list(band_candidate))
     
     subprocess.Popen(
         ' '.join([
@@ -56,7 +80,7 @@ def setup_modem(dev):
             '-i', 
             dev, 
             '-l', 
-            ':'.join([str(i) for i in [1,3,7,8]])
+            str(band)
         ]), 
         shell=True
     )
@@ -67,17 +91,16 @@ def setup_modem(dev):
     if stderr:
         print(stderr.decode())
         
-    return wdm, cid
+    return wdm, cid, band
 
 def change_band(dev):
     global GLOBAL_CONFIG, DEVICE_INFO
     
     band_candidate = ALL_LTE_BAND_CANDIDATE.copy()
-    for k, v in DEVICE_INFO:
+    for k, v in DEVICE_INFO.items():
         band_candidate = band_candidate - {v['band']}
     
     band = random.choice(list(band_candidate))
-    print(band)
     
     subprocess.Popen(
         ' '.join([
@@ -88,11 +111,12 @@ def change_band(dev):
             str(band)
         ]
     ), shell=True)
-    print(f"""Change band from {DEVICE_INFO[dev]['band']} to {band}""")
+    print(f"""Change {dev} band from {DEVICE_INFO[dev]['band']} to {band}""")
     DEVICE_INFO[dev]['band'] = band
 
 
 def create_runner(dev, queue):
+    global GLOBAL_CONFIG
     rrc_ota_parser = RRC_OTA_Parser()
     lte_ss_parser = Lte_Signal_Strength_Parser()
     nr_ss_parser = NR_Signal_Strength_Parser()
@@ -110,7 +134,8 @@ def create_runner(dev, queue):
     nr_ss_extractor.set_source_parser(nr_ss_parser)
 
     feature_extractor = FeatureExtractor(
-        sample_interval_sec=0.1, sample_length_sec=3)
+        sample_interval_sec=0.1, sample_length_sec=3
+    )
     feature_extractor.add_parser(rrc_ota_parser)
     feature_extractor.add_parser(lte_ss_parser)
     feature_extractor.add_parser(nr_ss_parser)
@@ -165,7 +190,8 @@ def create_runner(dev, queue):
         predictor=predictor,
         feature_extractor=feature_extractor,
         predict_interval=0.1,
-        actor=actor
+        actor=actor,
+        log_dir=GLOBAL_CONFIG['LOG_DIR']
     )
     return runner
 
@@ -177,7 +203,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     load_config(args.config_file)
-
+    log_dir = create_log_dir()
+    GLOBAL_CONFIG['LOG_DIR'] = log_dir
+    
     devs = GLOBAL_CONFIG['Device']
 
     if (len(devs) != 2):
@@ -186,9 +214,13 @@ if __name__ == '__main__':
     # Setup modem
     DEVICE_INFO = {}
     for dev in devs:
-        wdm, cid = setup_modem(dev)
-        DEVICE_INFO[dev] = {'wdm': wdm, 'cid': cid, 'band': [1,3,7,8]}
+        wdm, cid, band = setup_modem(dev)
+        DEVICE_INFO[dev] = {'wdm': wdm, 'cid': cid, 'band': band}
     band_setting_timestamp = time.time() - 10
+    
+    f = os.path.join(GLOBAL_CONFIG['LOG_DIR'], 'cmd_record.csv')
+    dbl_log = open(f,'w')
+    print('Timestamp,dev_0,dev_1\n', file=dbl_log, flush=True)
     
     try:
         q = Queue()
@@ -214,7 +246,6 @@ if __name__ == '__main__':
                 continue
             
             outs_info[e[0]] = [e[1] > 0.5, e[2]]
-            print(outs_info)
 
             if outs_info[devs[0]][0] == False and outs_info[devs[0]][0] == False:
                 continue
@@ -223,15 +254,19 @@ if __name__ == '__main__':
             
             if outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == False:
                 change_band(devs[0])
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', '0']) + '\n')
             elif outs_info[devs[0]][0] == False and outs_info[devs[1]][0] == True:
                 change_band(devs[1])
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '0', '1']) + '\n')
             elif outs_info[devs[0]][0] == True and outs_info[devs[1]][0] == True:
                 # change_band(devs[0])
-                pass
+                dbl_log.write(','.join([datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), '1', '1']) + '\n')
+                # Show prediction result during experiment. )
     
     except KeyboardInterrupt:
         print('Main process received KeyboardInterrupt')
         p1.join()
         p2.join()
+        dbl_log.close()
         time.sleep(1)
-        print("Process killed, closed.")()
+        print("Process killed, closed.")
