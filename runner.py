@@ -21,11 +21,17 @@ def get_ser(folder, dev: str):
                 "/dev/serial/by-id",
                 f"usb-SAMSUNG_SAMSUNG_Android_{device_to_serial[dev]}-if00-port0",
             )
-        else:
+        elif dev.startswith('qc'):
             return os.path.join(
                 "/dev/serial/by-id",
                 f"usb-Quectel_RM500Q-GL_{device_to_serial[dev]}-if00-port0",
             )
+        else:
+            return os.path.join(
+                '/tmp',
+                device_to_serial[dev]
+            )
+
 
 
 class Runner:
@@ -271,10 +277,10 @@ if __name__ == "__main__":
         ]
     )
     
-    predictor = RLF_Xgboost_Predictor('/home/fourcolor/Documents/ho_preditor/xgb_boost_scale_pos_weight_500_0.1_interval_3s_3s.json')
+    predictor = RLF_Xgboost_Predictor('/home/fourcolor/Documents/ho_predictor/xgb_boost_scale_pos_weight_500_0.1_interval_5s_3s.json')
     runner = DefaultRunner(
-        ser=get_ser('','qc00'),
-        # ser='/tmp/ttyV1',
+        # ser=get_ser('','qc00'),
+        ser='/tmp/ttyV1',
         predictor=predictor,
         feature_extractor=feature_extractor,
         predict_interval = 0.1

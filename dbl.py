@@ -16,7 +16,7 @@ import datetime
 GLOBAL_CONFIG = None
 DEVICE_INFO = None
 
-ALL_LTE_BAND_CANDIDATE = {1, 3, 7, 8}
+ALL_LTE_BAND_CANDIDATE = {"1","3","7","8"}
 
 def load_config(config_file):
     global GLOBAL_CONFIG
@@ -41,8 +41,16 @@ def create_log_dir(log_dir=None):
     os.makedirs(log_dir, exist_ok=True)
     return log_dir
 
-def setup_modem(dev):
+def setup_modem(dev:str):
     global GLOBAL_CONFIG, DEVICE_INFO
+    if dev.startswith('dummy'):
+        band_candidate = ALL_LTE_BAND_CANDIDATE.copy()
+        if DEVICE_INFO is not None:
+            for k, v in DEVICE_INFO.items():
+                band_candidate = band_candidate - {v['band']}   
+        band = random.choice(list(band_candidate))
+        return None, None, band
+    
     process = subprocess.Popen(
         [
             os.path.join(GLOBAL_CONFIG['PATH_UTILS'], 'dial-qmi.sh'),
@@ -115,7 +123,7 @@ def change_band(dev):
     DEVICE_INFO[dev]['band'] = band
 
 
-def create_runner(dev, queue):
+def runner_proc(dev, queue):
     global GLOBAL_CONFIG
     rrc_ota_parser = RRC_OTA_Parser()
     lte_ss_parser = Lte_Signal_Strength_Parser()
@@ -193,16 +201,17 @@ def create_runner(dev, queue):
         actor=actor,
         log_dir=GLOBAL_CONFIG['LOG_DIR']
     )
-    return runner
+    runner.run()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config_file',
-                        default='config.yml', help="Config file (yaml)")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-c', '--config_file',
+    #                     default='config.yml', help="Config file (yaml)")
+    # args = parser.parse_args()
     
-    load_config(args.config_file)
+    # # load_config(args.config_file)
+    load_config('config.yml')
     log_dir = create_log_dir()
     GLOBAL_CONFIG['LOG_DIR'] = log_dir
     
@@ -225,20 +234,19 @@ if __name__ == '__main__':
     
     try:
         q = Queue()
-        runner1, runner2 = create_runner(devs[0], q), create_runner(devs[1], q)
         
-        p1 = Process(target=runner1.run)     
-        p2 = Process(target=runner2.run)
+        p1 = Process(target=runner_proc, args=(devs[0], q))     
+        p2 = Process(target=runner_proc, args=(devs[1], q))     
         p1.start()
         p2.start()
 
         # lte_phy_EARFCN
-        e = None
         outs_info = {devs[0]: [False, None], devs[1]: [False, None]}
         while True:
             outs_info[devs[0]][0] = False
             outs_info[devs[1]][0] = False
             
+            e = None
             while not q.empty():
                 e = q.get()
 
