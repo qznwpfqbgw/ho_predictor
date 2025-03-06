@@ -5,8 +5,8 @@ from predictor import *
 from parser import *
 from feature_extractor import *
 from multiprocessing import Process, Queue
+from get_cell_info import get_cell_info
 import re
-import argparse
 import yaml
 import subprocess
 import os
@@ -16,7 +16,14 @@ import datetime
 GLOBAL_CONFIG = None
 DEVICE_INFO = None
 
-ALL_LTE_BAND_CANDIDATE = {"1","3","7","8"}
+ALL_LTE_BAND_CANDIDATE = {
+    "1","3","7","8",
+    "1:3", "1:7", "1:8", "3:7", "3:8", "7:8",
+    "1:3:7", "1:3:8", "1:7:8", "3:7:8",
+    "1:3:7:8"
+}
+
+INIT_BAND = ["7", "8"]
 
 def load_config(config_file):
     global GLOBAL_CONFIG
