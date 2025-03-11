@@ -4,8 +4,8 @@ import numpy as np
 
 
 class NR_Signal_Strength_Extractor(Extractor):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.default_output = {
             "nr_best_rsrq": -200,
             "nr_best_rsrp": -200,

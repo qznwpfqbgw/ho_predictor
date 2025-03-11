@@ -4,8 +4,8 @@ import io
 from itertools import chain
 
 class Lte_Signal_Strength_Parser(Parser):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.type_id = ['LTE_PHY_Connected_Mode_Intra_Freq_Meas']
         self.default_data = {
             "PCI": 0,

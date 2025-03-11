@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 
 class Lte_Signal_Strength_Extractor(Extractor):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.default_output = {
             "lte_best_rsrq": -200,
             "lte_best_rsrp": -200,

@@ -3,8 +3,8 @@ from datetime import datetime as dt
 # Get HO events
 class RRC_OTA_Parser(Parser):
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.type_id = ["LTE_RRC_OTA_Packet", "5G_NR_RRC_OTA_Packet"]
         self.RRC_DICT = {}
         self.type_list = [

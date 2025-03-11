@@ -6,8 +6,8 @@ from itertools import chain
 
 
 class NR_Signal_Strength_Parser(Parser):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.type_id = ["5G_NR_ML1_Searcher_Measurement_Database_Update_Ext"]
         self.default_data = {
             "SSB Periodicity Serv Cell": 0,

@@ -1,8 +1,9 @@
 import pandas as pd
 class Parser:
-    def __init__(self) -> None:
+    def __init__(self, dev="") -> None:
         self.type_id = []
         self.storage_df = pd.DataFrame()
+        self.dev = dev
     
     def parse(self, msg):
         pass

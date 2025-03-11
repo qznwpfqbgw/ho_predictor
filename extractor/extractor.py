@@ -4,9 +4,10 @@ warnings.filterwarnings("ignore")
 
 
 class Extractor:
-    def __init__(self) -> None:
+    def __init__(self, dev = "") -> None:
         self.source_parser = None
         self.default_output = {}
+        self.dev = dev
 
     def set_source_parser(self, parser):
         self.source_parser = parser

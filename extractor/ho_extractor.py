@@ -3,9 +3,10 @@ from collections import namedtuple
 import time
 import datetime
 
+
 class HO_Extractor(Extractor):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev=""):
+        super().__init__(dev)
         self.default_output = {
             "LTE_HO": 0,
             "MN_HO": 0,
@@ -73,6 +74,7 @@ class HO_Extractor(Extractor):
                 for i in v:
                     dt = datetime.datetime.strptime(i.start, "%Y-%m-%d %H:%M:%S.%f")
                     print(
+                        self.dev,
                         time.mktime(dt.timetuple())
                         + (dt.microsecond / 1000000.0)
                         + 8 * 60 * 60,

@@ -24,8 +24,8 @@ class MEASOBJ:
     def __repr__(self):
         return f'({self.name}, {self.freq})'
 class MR_Extractor(Extractor):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dev = ""):
+        super().__init__(dev)
         self.default_output = {
             "eventA1": 0,
             "eventA2": 0,

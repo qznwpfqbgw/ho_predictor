@@ -2,9 +2,11 @@ from .predictor import Predictor
 import xgboost as xgb
 import numpy as np
 import time
+import random
 class RLF_Xgboost_Predictor(Predictor):
-    def __init__(self, model_path):
-        super().__init__()
+    def __init__(self, model_path, dev = ""):
+        random.seed(time.time())
+        super().__init__(dev)
         self.model = xgb.Booster()
         self.model.load_model(
             model_path
@@ -57,7 +59,9 @@ class RLF_Xgboost_Predictor(Predictor):
             ]).flatten().reshape(1,-1)
             x = xgb.DMatrix(x_in_np)
             y = self.model.predict(x)
-            if y > 0.5:
-                print(time.time(), ": Close to RLF !!!")
+            
+            y = [1 if random.random() > 0.9 else 0]
+            if y[0] > 0.5:
+                print(self.dev, time.time(), ": Close to RLF !!!")
             return y[0], x_in[-1]['lte_phy_EARFCN']
         return 0, 0
