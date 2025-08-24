@@ -1,6 +1,26 @@
 Device:
-  - dummy1
-  - dummy2
+  - qc00
+  - qc02
+
+SIDE_EFFECT_S: 0.4
+
+Virt_Device:
+  - device: dummy1
+    shm_file: "/dev/shm/band_setting1"
+    init_band: b1_b3_b7_b8
+    side_effect_interfaces: [ul_veth1, dl_veth1]
+  - device: dummy2
+    shm_file: "/dev/shm/band_setting2"
+    init_band: b1_b8
+    side_effect_interfaces: [dl_veth2, ul_veth2]
+
+band_candidate:
+  - b1_b3
+  - b1_b7
+  - b1_b8
+  - b3_b7
+  - b3_b8
+  - b7_b8
 
 SLEEP_TIME: 3
 

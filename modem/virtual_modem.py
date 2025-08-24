@@ -14,5 +14,3 @@ class virtual_modem:
     
     def setup_modem(self, dev, GLOBAL_CONFIG, DEVICE_INFO):
         pass
-    
-    def 

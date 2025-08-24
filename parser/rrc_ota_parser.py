@@ -9,6 +9,8 @@ class RRC_OTA_Parser(Parser):
         self.RRC_DICT = {}
         self.type_list = [
             '"rrcConnectionRelease"',
+            '"rrcConnectionReconfiguration"',
+            '"rrcConnectionReconfigurationComplete"',
             '"lte-rrc.rrcConnectionRequest_element"',
             '"lte-rrc.targetPhysCellId"',
             'dl-CarrierFreq',
@@ -46,6 +48,8 @@ class RRC_OTA_Parser(Parser):
         self.columns = [
             "rrcConnectionRelease",
             "rrcConnectionRequest",
+            'rrcConnectionReconfiguration',
+            'rrcConnectionReconfigurationComplete',
             "lte_targetPhysCellId", # Handover target.
             "dl-CarrierFreq",
             "lte-rrc.t304",

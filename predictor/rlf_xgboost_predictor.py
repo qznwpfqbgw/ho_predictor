@@ -59,8 +59,7 @@ class RLF_Xgboost_Predictor(Predictor):
             ]).flatten().reshape(1,-1)
             x = xgb.DMatrix(x_in_np)
             y = self.model.predict(x)
-            
-            y = [1 if random.random() > 0.9 else 0]
+            # print(y[0])
             if y[0] > 0.5:
                 print(self.dev, time.time(), ": Close to RLF !!!")
             return y[0], x_in[-1]['lte_phy_EARFCN']
